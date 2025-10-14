@@ -1,8 +1,8 @@
-E-Commerce Backend
+### E-Commerce Backend
 
 This project is a backend system for an e-commerce website. It manages core functionalities such as user authentication, product management, shopping carts ...ect . The backend is built using Python (Django/RestAPI)
 
-- Features
+## - Features
 
 - User Authentication
   - Handle registration, login, logout, sessions, and JWT tokens (if API). Manage permissions (user vs admin).
