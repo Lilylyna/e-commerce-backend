@@ -27,9 +27,14 @@ urlpatterns = [
     path("", include("core.urls")),
     path("", include("userauths.urls")),
 
+
     # signin/account routes
     path('api/accounts/', include('accounts.urls')),
 
+    #reset password routes
+    path('auth/', include('django.contrib.auth.urls')),
+
+    
     # JWT refresh route
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
 ]
