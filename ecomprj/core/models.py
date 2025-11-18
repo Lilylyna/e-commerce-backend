@@ -32,9 +32,9 @@ class Vendor(models.Model):
     contact = models.CharField(max_length=100, default="No contact found")
     chat_response_time = models.CharField(max_length=100, default="100")
     shipping_time = models.CharField(max_length=100, default="100")
-    authentic_rating = models.CharField(max_length=100 default="100")
-    days_return = models.CharField(max_length=100 default="100")
-    warranty_period = models.CharField(max_length=100 default="100")
+    authentic_rating = models.CharField(max_length=100, default="100")
+    days_return = models.CharField(max_length=100, default="100")
+    warranty_period = models.CharField(max_length=100, default="100")
 
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)  #deleting vendors doesnt delete the shop
 
