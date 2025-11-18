@@ -21,4 +21,5 @@ from core.views import index
 urlpatterns = [
     path('admin/', admin.site.urls),
     path("", include("core.urls")),
+    path('auth/', include('django.contrib.auth.urls')),
 ]
