@@ -139,6 +139,7 @@ INSTALLED_APPS += [
     'rest_framework_simplejwt',
     'rest_framework.authtoken',
     'accounts',
+    'profiles.apps.ProfilesConfig',
 ]
 
 from datetime import timedelta
@@ -165,3 +166,4 @@ SESSION_COOKIE_SECURE = False
 SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = 'DENY'
+
