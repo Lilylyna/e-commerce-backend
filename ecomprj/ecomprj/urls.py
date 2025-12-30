@@ -37,5 +37,7 @@ urlpatterns = [
 
     path('api/reviews/', include('reviews.urls')),
 
+    path('api/vendor/', include('vendors.urls')),
+
 ]
 

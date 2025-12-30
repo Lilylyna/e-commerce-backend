@@ -141,6 +141,7 @@ INSTALLED_APPS += [
     'accounts',
     'profiles.apps.ProfilesConfig',
     'reviews',
+    'vendors',
 ]
 
 from datetime import timedelta
