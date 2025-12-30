@@ -140,6 +140,7 @@ INSTALLED_APPS += [
     'rest_framework.authtoken',
     'accounts',
     'profiles.apps.ProfilesConfig',
+    'reviews',
 ]
 
 from datetime import timedelta

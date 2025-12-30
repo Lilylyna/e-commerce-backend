@@ -1,6 +1,7 @@
 from django.db import models
 from shortuuid.django_fields import ShortUUIDField
 from django.contrib.auth import get_user_model
+from django.db.models import Avg, Count
 
 User = get_user_model()
 
@@ -54,6 +55,14 @@ class Product(models.Model):
         verbose_name = "Product"
         verbose_name_plural = "Products"
         ordering = ['-date']
+    
+    def average_rating(self):
+        return self.reviews.aggregate(
+            avg=Avg('rating')
+        )['avg'] or 0
+    
+    def review_count(self):
+        return self.reviews.count()
     
     def __str__(self):
         return self.title
