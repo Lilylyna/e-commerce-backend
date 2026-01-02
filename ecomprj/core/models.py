@@ -93,4 +93,20 @@ class Cart(models.Model):
         """Calculate subtotal for this cart item"""
         return self.price * self.quantity
 
+
+class Wishlist(models.Model):
+    """Wishlist model - stores products users want to save for later"""
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="wishlist_items")
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name="wishlist_items")
+    date = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        verbose_name = "Wishlist"
+        verbose_name_plural = "Wishlist Items"
+        unique_together = ['user', 'product']  # Prevent duplicate wishlist items per user
+        ordering = ['-date']
+    
+    def __str__(self):
+        return f"{self.user.username} - {self.product.title}"
+
  
