@@ -26,7 +26,7 @@ SECRET_KEY = 'django-insecure-$bq-6_x=uvfuqkmpkv$ybp#$e_b=b#+7*e49+44e&&lmzb)9ld
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['testserver', '127.0.0.1', 'localhost']
 
 
 # Application definition
@@ -148,7 +148,7 @@ REST_FRAMEWORK = {
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
     'DEFAULT_PERMISSION_CLASSES': (
-        'rest_framework.permissions.IsAuthenticated',
+        'rest_framework.permissions.AllowAny',  # Allow unauthenticated access globally
     ),
 }
 
@@ -165,3 +165,21 @@ SESSION_COOKIE_SECURE = False
 SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = 'DENY'
+
+# Email Configuration
+# For development, emails will be printed to console
+# For production, configure SMTP settings below
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'  # Change to 'django.core.mail.backends.smtp.EmailBackend' for production
+
+# Production SMTP Settings (uncomment and configure for production)
+# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+# EMAIL_HOST = 'smtp.gmail.com'  # or your SMTP server
+# EMAIL_PORT = 587
+# EMAIL_USE_TLS = True
+# EMAIL_HOST_USER = 'your-email@gmail.com'
+# EMAIL_HOST_PASSWORD = 'your-app-password'
+# DEFAULT_FROM_EMAIL = 'noreply@yourstore.com'
+
+# Site Configuration
+SITE_NAME = 'E-Commerce Store'
+FRONTEND_URL = 'http://localhost:3000'  # Update with your frontend URL
