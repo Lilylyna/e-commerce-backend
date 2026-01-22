@@ -1,6 +1,7 @@
 from django.db import models
 from shortuuid.django_fields import ShortUUIDField
 from django.contrib.auth import get_user_model
+from django.contrib.auth.models import User
 
 User = get_user_model()
 
@@ -94,3 +95,25 @@ class Cart(models.Model):
         return self.price * self.quantity
 
  
+class Order(models.Model):
+
+    def is_owner(self, user):
+     return self.user == user
+
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    email = models.EmailField(blank=False)
+    stripe_payment_intent = models.CharField(max_length=255, unique=True)
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    currency = models.CharField(max_length=10, default="usd")
+
+    STATUS_CHOICES = (
+        ("pending", "Pending"),
+        ("paid", "Paid"),
+        ("failed", "Failed"),
+    )
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="pending")
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Order {self.id} - {self.status}"

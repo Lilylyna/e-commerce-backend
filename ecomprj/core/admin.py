@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Category, Vendor, Product, Cart
+from .models import Category, Vendor, Product, Cart , Order
 
 # Register your models here.
 
@@ -28,3 +28,10 @@ class CartAdmin(admin.ModelAdmin):
     list_filter = ('date',)
     search_fields = ('user__username', 'user__email', 'product__title', 'product__pid')
     raw_id_fields = ('user', 'product')
+
+@admin.register(Order)
+class OrderAdmin(admin.ModelAdmin):
+    list_display = ('id', 'user', 'email', 'stripe_payment_intent', 'amount', 'currency', 'status', 'created_at')
+    list_filter = ('status', 'currency', 'created_at')
+    search_fields = ('id', 'user__username', 'email', 'stripe_payment_intent')
+    raw_id_fields = ('user',)
