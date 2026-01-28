@@ -10,6 +10,13 @@ from .models import Order
 
 def send_order_confirmation(order_id):
     """
+    OBSERVER PATTERN INTEGRATION:
+    This function is called by the EmailNotificationObserver when order status changes.
+    The observer pattern allows this email functionality to be decoupled from the
+    core order processing logic - the Order model doesn't need to know about emails,
+    it just notifies observers when its state changes.
+    """
+    """
     Send order confirmation email to the customer.
     
     Args:

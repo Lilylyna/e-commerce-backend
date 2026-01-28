@@ -149,7 +149,11 @@ class OrderViewSet(viewsets.ReadOnlyModelViewSet):
                         product.stock_count += order_item.quantity
                         product.save()
                 
-                # Update order status
+                # OBSERVER PATTERN: Update order status to cancelled
+                # When order.save() is called, the observer pattern will be triggered
+                # to notify observers (EmailNotificationObserver, InventoryObserver, AnalyticsObserver)
+                # about the status change. Observers will handle email notifications,
+                # inventory restoration, and analytics tracking automatically.
                 order.order_status = 'cancelled'
                 order.save()
                 
@@ -294,6 +298,9 @@ class OrderViewSet(viewsets.ReadOnlyModelViewSet):
                     # Recalculate total with discount applied
                     total = subtotal + shipping_fee + tax - discount_amount
 
+                # OBSERVER PATTERN: Create order (status will be 'pending' initially)
+                # When the order is saved, the observer pattern will be triggered
+                # to notify observers about the new order creation
                 order = Order.objects.create(
                     user=user,
                     order_status='pending',
@@ -318,7 +325,10 @@ class OrderViewSet(viewsets.ReadOnlyModelViewSet):
                         price=item_data['price']
                     )
                     
-                    # Reduce product stock (product is already locked)
+                    # OBSERVER PATTERN: Reduce product stock
+                    # When product.save() is called, the observer pattern will be triggered
+                    # to notify observers (ProductStockObserver) about stock changes.
+                    # Observers will handle low stock alerts, out of stock notifications, etc.
                     product.stock_count -= item_data['quantity']
                     product.save()
                 

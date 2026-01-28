@@ -1,6 +1,7 @@
 from django.db import models
 from shortuuid.django_fields import ShortUUIDField
 from django.contrib.auth import get_user_model
+from .patterns import ObserverRegistry, EmailNotificationObserver, InventoryObserver, AnalyticsObserver
 
 User = get_user_model()
 
@@ -60,7 +61,38 @@ class Product(models.Model):
     
     def __str__(self):
         return self.title
-    
+
+    def save(self, *args, **kwargs):
+        """Override save to notify observers of stock changes
+
+        OBSERVER PATTERN IMPLEMENTATION:
+        - This method detects when stock_count changes
+        - It notifies registered observers about stock level changes
+        - Observers can then perform side effects (low stock alerts, etc.)
+        """
+        # OBSERVER PATTERN: Track stock changes before saving
+        old_stock = None
+        if self.pk:  # Only if this is an existing product
+            try:
+                old_product = Product.objects.get(pk=self.pk)
+                old_stock = old_product.stock_count
+            except Product.DoesNotExist:
+                old_stock = None
+
+        # Save the product
+        super().save(*args, **kwargs)
+
+        # OBSERVER PATTERN: Notify observers if stock changed
+        if old_stock is not None and old_stock != self.stock_count:
+            registry = ObserverRegistry()
+            event_data = {
+                'event_type': 'stock_changed',
+                'product': self,
+                'old_stock': old_stock,
+                'new_stock': self.stock_count
+            }
+            registry.notify_observers('stock_changed', event_data)
+
     @property
     def is_discounted(self):
         """Check if product has a discount"""
@@ -224,9 +256,38 @@ class Order(models.Model):
         return f"Order {self.oid} - {self.user.username} - {self.total}"
     
     def save(self, *args, **kwargs):
-        """Override save to calculate total"""
+        """Override save to calculate total and notify observers of status changes
+
+        OBSERVER PATTERN IMPLEMENTATION:
+        - This method detects when order_status changes
+        - It notifies registered observers about the status change
+        - Observers can then perform side effects (emails, inventory updates, analytics)
+        """
+        # OBSERVER PATTERN: Track status changes before saving
+        old_status = None
+        if self.pk:  # Only if this is an existing order
+            try:
+                old_order = Order.objects.get(pk=self.pk)
+                old_status = old_order.order_status
+            except Order.DoesNotExist:
+                old_status = None
+
+        # Calculate total
         self.total = self.subtotal + self.shipping_fee + self.tax - self.discount_amount
+
+        # Save the order
         super().save(*args, **kwargs)
+
+        # OBSERVER PATTERN: Notify observers if status changed
+        if old_status and old_status != self.order_status:
+            registry = ObserverRegistry()
+            event_data = {
+                'event_type': 'order_status_changed',
+                'order': self,
+                'old_status': old_status,
+                'new_status': self.order_status
+            }
+            registry.notify_observers('order_status_changed', event_data)
 
 
 class OrderItem(models.Model):
