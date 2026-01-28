@@ -1,261 +1,125 @@
-# E-Commerce Backend API
+# E-Commerce Backend Project
 
-A comprehensive Django REST Framework backend for e-commerce operations, featuring JWT authentication, complete checkout flow, inventory management, and order processing.
+This is the backend for an e-commerce application, built with Django and Django REST Framework.
 
-## 🚀 Features Implemented
+## Implemented Features
 
-### ✅ **Authentication & Security**
-- JWT Token Authentication (Access + Refresh tokens)
-- User registration and login/logout
-- Secure token verification and refresh endpoints
-- Password hashing and user session management
+-   **User Authentication & Authorization**
+    -   User registration and login.
+    -   JWT (JSON Web Token) based authentication with refresh and verify endpoints.
+    -   Password change functionality for authenticated users.
+    -   Default permissions set to `IsAuthenticated` for most API endpoints.
 
-### ✅ **Sales & Operations (Checkout Flow)**
-- **Order Models**: Complete Order and OrderItem models with status tracking
-- **Stock Validation**: Real-time inventory checking during checkout
-- **Transaction Safety**: Database locking prevents overselling
-- **Address Management**: Shipping and billing address support
-- **Coupon System**: Percentage and fixed-amount discounts with usage limits
-- **Order Processing**: Complete cart-to-order conversion
-- **Email Notifications**: Automated order confirmations
+-   **Product & Category Management**
+    -   `Category` model for organizing products.
+    -   `Vendor` model for sellers, linked to Django's `User` model.
+    -   `Product` model with details like price, stock, status, and discount calculations.
+    -   Publicly accessible API endpoints for listing and filtering products and categories.
+    -   Product listings include filtering, searching, and cursor pagination.
 
-### ✅ **Product & Inventory Management**
-- Product catalog with categories and vendors
-- Image upload support for products and categories
-- Stock level tracking and availability status
-- Product search and filtering capabilities
+-   **Shopping Cart & Order Processing**
+    -   `Cart` model to store items for purchase.
+    -   APIs for adding, updating, and removing items from the cart.
+    -   Cart summary endpoint to get total price and item count.
+    -   `Order` model to represent customer orders.
+    -   Checkout process to convert cart items into an order, with stock validation and coupon application.
+    -   Order cancellation functionality with stock restoration.
+    -   `OrderItem` model to detail individual products within an order.
 
-### ✅ **Shopping Cart System**
-- Persistent cart storage per user
-- Add/update/remove cart items
-- Cart summary and total calculations
-- Automatic price updates from product catalog
+-   **Payment Integration (Stripe)**
+    -   API endpoint to create Stripe Payment Intents for secure payment collection.
+    -   Stripe webhook endpoint (`/api/stripe-webhook/`) to handle payment success/failure events.
+    -   Order status updates (`pending`, `paid`, `failed`) based on Stripe webhook events.
+    -   Email confirmation for successful orders.
 
-### ✅ **Admin & Vendor Management**
-- Django admin interface for content management
-- Vendor accounts with store management
-- Product management per vendor
-- Order status updates and tracking
+-   **User Address & Profile Management**
+    -   `Address` model for storing shipping and billing addresses.
+    -   Soft deletion for addresses.
+    -   Functionality to set default addresses.
+    -   `Profile` model for extended user information (bio, phone, image).
+    -   Authenticated API endpoint for viewing user profile.
 
-## 🛠 Tech Stack
+-   **Coupons & Discounts**
+    -   `Coupon` model with various discount types (percentage, fixed amount).
+    -   Validation and application of coupons during checkout.
 
-### Backend Framework
-- **Django 5.2.7** - Web framework
-- **Django REST Framework 3.16.1** - API framework
-- **Django Simple JWT 5.5.1** - JWT authentication
+-   **Wishlist Functionality**
+    -   `Wishlist` model to allow users to save products for later.
+    -   APIs for adding and removing products from a user's wishlist.
 
-### Database & Storage
-- **SQLite** - Database (development)
-- **Pillow 12.0.0** - Image processing
-- **Django ShortUUIDField** - Unique ID generation
+-   **API Documentation (DRF Spectacular)**
+    -   Integrated OpenAPI 3.0 schema generation.
+    -   Interactive Swagger UI available at `/api/schema/docs/`.
 
-### Additional Libraries
-- **Requests** - HTTP client for testing
-- **Python-JWT** - JWT token handling
-- **ShortUUID** - Compact unique identifiers
+-   **Observer Pattern**
+    -   Implemented a simple observer pattern for `Product` stock changes and `Order` status changes.
+    -   Observers (e.g., `EmailNotificationObserver`, `InventoryObserver`, `AnalyticsObserver`, `ProductStockObserver`) are notified on relevant model `save` operations.
 
-## 📋 API Endpoints
+## Installation
 
-### Authentication
-```
-POST /api/token/              # Obtain access/refresh tokens
-POST /api/token/verify/       # Verify JWT token validity
-POST /api/token/refresh/      # Refresh access token
-POST /api/accounts/login/     # Alternative login endpoint
-```
+1.  **Clone the repository:**
 
-### Address Management
-```
-GET  /api/addresses/          # List user addresses
-POST /api/addresses/          # Create new address
-GET  /api/addresses/{id}/     # Get specific address
-PUT  /api/addresses/{id}/     # Update address
-DELETE /api/addresses/{id}/   # Delete address (soft delete)
-POST /api/addresses/{id}/set_default/  # Set as default
-```
+    ```bash
+    git clone <repository_url>
+    cd e-commerce-backend
+    ```
 
-### Product Management
-```
-GET  /api/products/           # List published products
-GET  /api/products/{id}/      # Get product details
-```
+2.  **Create and activate a virtual environment (recommended):**
 
-### Shopping Cart
-```
-GET  /api/cart/               # List cart items
-POST /api/cart/               # Add product to cart
-PUT  /api/cart/{id}/          # Update cart item
-DELETE /api/cart/{id}/        # Remove from cart
-GET  /api/cart/summary/       # Get cart totals
-```
+    ```bash
+    python -m venv venv
+    # On Windows
+    .\venv\Scripts\activate
+    # On macOS/Linux
+    source venv/bin/activate
+    ```
 
-### Coupon System
-```
-GET  /api/coupons/            # List active coupons
-POST /api/coupons/validate/   # Validate coupon code
-```
+3.  **Install dependencies:**
 
-### Order Management (Sales & Operations Core)
-```
-GET  /api/orders/             # List user orders
-GET  /api/orders/{id}/        # Get order details
-POST /api/orders/checkout/    # Complete checkout process
-POST /api/orders/{id}/cancel/ # Cancel pending order
-```
+    ```bash
+    pip install -r requirements.txt
+    ```
 
-## 🚀 Quick Start
+4.  **Set up environment variables:**
+    Create a `.env` file in the `ecomprj` directory (e.g., `ecomprj/.env`) with the following variables:
 
-### Prerequisites
-- Python 3.8+
-- pip package manager
-- Virtual environment (recommended)
+    ```env
+    SECRET_KEY=your_django_secret_key_here
+    DEBUG=True
+    DB_ENGINE=django.db.backends.sqlite3
+    DB_NAME=db.sqlite3
 
-### Installation
+    # Stripe API Keys (replace with your actual keys)
+    STRIPE_SECRET_KEY=sk_test_your_secret_key
+    STRIPE_PUBLISHABLE_KEY=pk_test_your_publishable_key
+    STRIPE_WEBHOOK_SECRET=whsec_your_webhook_secret
 
-1. **Clone and Navigate**
-   ```bash
-   git clone <your-repository-url>
-   cd e-commerce-backend
-   ```
+    # SendGrid Email Settings (replace with your actual API key and email)
+    SENDGRID_API_KEY=SG.your_sendgrid_api_key
+    EMAIL_FROM=noreply@example.com
+    ```
+    *Note: For production, set `DEBUG=False` and configure a more robust database.* 
 
-2. **Create Virtual Environment**
-   ```bash
-   python -m venv venv
-   venv\Scripts\activate  # Windows
-   # source venv/bin/activate  # Linux/Mac
-   ```
+5.  **Run database migrations:**
 
-3. **Install Dependencies**
-   ```bash
-   pip install django djangorestframework djangorestframework-simplejwt pillow django-shortuuidfield requests
-   ```
+    ```bash
+    python manage.py makemigrations
+    python manage.py migrate
+    ```
 
-4. **Setup Database**
-   ```bash
-   cd ecomprj
-   python manage.py makemigrations
-   python manage.py migrate
-   ```
+6.  **Create a superuser (for Django Admin):**
 
-5. **Create Test Data (Optional)**
-   ```bash
-   python manage.py create_test_data
-   ```
+    ```bash
+    python manage.py createsuperuser
+    ```
 
-6. **Run Development Server**
-   ```bash
-   python manage.py runserver
-   ```
+7.  **Run the development server:**
 
-   Server will start at: `http://127.0.0.1:8000/`
+    ```bash
+    python manage.py runserver
+    ```
 
-## 🧪 Testing
+    The API will be available at `http://127.0.0.1:8000/`.
+    Django Admin will be at `http://127.0.0.1:8000/admin/`.
+    Swagger UI for API docs will be at `http://127.0.0.1:8000/api/schema/docs/`.
 
-### Automated Test Suite
-```bash
-# From e-commerce-backend directory
-python api_test_suite.py
-```
-
-This comprehensive test suite validates:
-- JWT authentication flow
-- Address management
-- Cart operations
-- Coupon validation
-- Complete checkout process
-- Order management
-- Stock validation
-
-### Manual Testing
-```bash
-# Run built-in API tests
-cd ecomprj
-python manage.py test_apis
-```
-
-## 📊 Database Models
-
-### Core Models
-- **User**: Django's built-in user model
-- **Category**: Product categories
-- **Vendor**: Store/vendor accounts
-- **Product**: Product catalog with inventory
-- **Cart**: Shopping cart items
-- **Address**: User addresses (shipping/billing)
-- **Coupon**: Discount codes with rules
-- **Order**: Customer orders
-- **OrderItem**: Individual order line items
-
-### Key Relationships
-- User → Addresses (1:many)
-- User → Cart Items (1:many)
-- User → Orders (1:many)
-- Product → OrderItems (1:many)
-- Order → OrderItems (1:many)
-- Order → Addresses (shipping/billing)
-
-## 🔒 Security Features
-
-- JWT token-based authentication
-- Password hashing with Django's auth system
-- CSRF protection on forms
-- SQL injection prevention via Django ORM
-- Input validation and sanitization
-- Soft deletes for data integrity
-
-## 📧 Email Integration
-
-- Automated order confirmation emails
-- Configurable email templates
-- SMTP server integration ready
-
-## 🔄 API Response Format
-
-All API responses follow REST standards:
-
-**Success Response:**
-```json
-{
-  "success": true,
-  "message": "Operation completed",
-  "data": { ... }
-}
-```
-
-**Error Response:**
-```json
-{
-  "success": false,
-  "error": "Error description",
-  "details": { ... }
-}
-```
-
-## 🚀 Production Deployment
-
-For production deployment:
-1. Switch to PostgreSQL database
-2. Configure environment variables
-3. Set up proper SMTP server
-4. Enable HTTPS/SSL
-5. Configure static/media file serving
-6. Set DEBUG=False
-7. Use proper secret keys
-
-## 📝 Development Notes
-
-- Uses ShortUUID for readable IDs (e.g., `ordhc4133a14g`)
-- Implements database transactions for data consistency
-- Soft deletes preserve data integrity
-- Comprehensive test coverage for all features
-
-## 🤝 Contributing
-
-1. Create feature branch from `main`
-2. Implement changes with tests
-3. Run full test suite
-4. Submit pull request
-
----
-
-**Built with Django REST Framework • JWT Authentication • PostgreSQL Ready**

@@ -1,6 +1,8 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from core.views import index, AddressViewSet, CouponViewSet, OrderViewSet, CartViewSet, ProductViewSet
+from core.payments import create_payment_intent
+from core.webhooks import stripe_webhook
 
 app_name = "core"
 
@@ -15,4 +17,6 @@ router.register(r'products', ProductViewSet, basename='product')
 urlpatterns = [
     path("", index),
     path("api/", include(router.urls)),
+    path("api/create-payment-intent/", create_payment_intent),
+    path("api/stripe-webhook/", stripe_webhook),
 ]

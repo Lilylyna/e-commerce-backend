@@ -16,29 +16,36 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
-from core.views import index
+from django.conf import settings
+from django.conf.urls.static import static
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView, TokenVerifyView
+from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 
 urlpatterns = [
     # Admin route
     path('admin/', admin.site.urls),
 
-    #main routes
+    # Main app routes
     path("", include("core.urls")),
     path("", include("userauths.urls")),
 
-
-    # signin/account routes
+    # Accounts API routes
     path('api/accounts/', include('accounts.urls')),
+    path('api/profile/', include('profiles.urls')),
+    path('api/reviews/', include('reviews.urls')),
 
-    #reset password routes
+    # Django auth (password reset, etc.)
     path('auth/', include('django.contrib.auth.urls')),
 
-    
     # JWT token routes
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('api/token/verify/', TokenVerifyView.as_view(), name='token_verify'),
+
+    # API schema & docs (drf-spectacular)
+    path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
+    path('api/schema/docs/', SpectacularSwaggerView.as_view(url_name='schema'), name='schema-docs'),
 ]
 
- 
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

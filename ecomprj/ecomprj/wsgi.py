@@ -11,6 +11,11 @@ import os
 
 from django.core.wsgi import get_wsgi_application
 
+import certifi
+
+os.environ['SSL_CERT_FILE'] = certifi.where()
+
+
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'ecomprj.settings')
 
 application = get_wsgi_application()

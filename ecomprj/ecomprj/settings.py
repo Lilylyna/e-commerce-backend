@@ -11,21 +11,60 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
+from datetime import timedelta
 import os
+
+from decouple import config
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+        'file': {
+            'class': 'logging.FileHandler',
+            'filename': os.path.join(BASE_DIR, 'stripe_webhook.log'),
+            'mode': 'a',
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console', 'file'],
+            'level': 'INFO',
+        },
+        'stripe': {   # custom logger for Stripe
+            'handlers': ['console', 'file'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+    },
+}
+
+
+EMAIL_BACKEND = "sendgrid_backend.SendgridBackend"
+SENDGRID_API_KEY = config("SENDGRID_API_KEY")
+DEFAULT_FROM_EMAIL = config("EMAIL_FROM")
+EMAIL_USE_TLS = True
+EMAIL_PORT = 587
+EMAIL_HOST = "smtp.sendgrid.net"
+SENDGRID_SANDBOX_MODE_IN_DEBUG = False
 
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-$bq-6_x=uvfuqkmpkv$ybp#$e_b=b#+7*e49+44e&&lmzb)9ld'
+SECRET_KEY = config('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
-
 ALLOWED_HOSTS = ['testserver', '127.0.0.1', 'localhost']
 
 
@@ -38,10 +77,18 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'drf_spectacular',
 
     # Custom Apps
     'core',
     'userauths',
+    'rest_framework',
+    'rest_framework_simplejwt',
+    'rest_framework.authtoken',
+    'accounts',
+    'django_filters',
+    'profiles.apps.ProfilesConfig',
+    'reviews',
 ]
 
 MIDDLEWARE = [
@@ -79,8 +126,8 @@ WSGI_APPLICATION = 'ecomprj.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': config('DB_ENGINE'),
+        'NAME': BASE_DIR / config('DB_NAME'),
     }
 }
 
@@ -134,22 +181,15 @@ MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-INSTALLED_APPS += [
-    'rest_framework',
-    'rest_framework_simplejwt',
-    'rest_framework.authtoken',
-    'accounts',
-]
-
-from datetime import timedelta
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
     'DEFAULT_PERMISSION_CLASSES': (
-        'rest_framework.permissions.AllowAny',  # Allow unauthenticated access globally
+        'rest_framework.permissions.IsAuthenticated',
     ),
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
 }
 
 SIMPLE_JWT = {
@@ -160,26 +200,23 @@ SIMPLE_JWT = {
     'UPDATE_LAST_LOGIN': True,
 }
 
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'E-Commerce Backend API',
+    'DESCRIPTION': 'API documentation for the E-Commerce backend project',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+}
+
 CSRF_COOKIE_SECURE = False  
 SESSION_COOKIE_SECURE = False
 SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = 'DENY'
 
-# Email Configuration
-# For development, emails will be printed to console
-# For production, configure SMTP settings below
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'  # Change to 'django.core.mail.backends.smtp.EmailBackend' for production
-
-# Production SMTP Settings (uncomment and configure for production)
-# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-# EMAIL_HOST = 'smtp.gmail.com'  # or your SMTP server
-# EMAIL_PORT = 587
-# EMAIL_USE_TLS = True
-# EMAIL_HOST_USER = 'your-email@gmail.com'
-# EMAIL_HOST_PASSWORD = 'your-app-password'
-# DEFAULT_FROM_EMAIL = 'noreply@yourstore.com'
-
-# Site Configuration
 SITE_NAME = 'E-Commerce Store'
-FRONTEND_URL = 'http://localhost:3000'  # Update with your frontend URL
+FRONTEND_URL = 'http://localhost:3000'
+
+
+STRIPE_SECRET_KEY = config('STRIPE_SECRET_KEY')
+STRIPE_PUBLISHABLE_KEY = config('STRIPE_PUBLISHABLE_KEY')
+STRIPE_WEBHOOK_SECRET = config("STRIPE_WEBHOOK_SECRET")

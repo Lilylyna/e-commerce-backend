@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Category, Vendor, Product, Cart, Address, Coupon, Order, OrderItem
+from .models import Category, Vendor, Product, Cart, Wishlist, Address, Coupon, Order, OrderItem
 
 # Register your models here.
 
@@ -29,6 +29,12 @@ class CartAdmin(admin.ModelAdmin):
     search_fields = ('user__username', 'user__email', 'product__title', 'product__pid')
     raw_id_fields = ('user', 'product')
 
+@admin.register(Wishlist)
+class WishlistAdmin(admin.ModelAdmin):
+    list_display = ('user', 'product', 'date')
+    list_filter = ('date',)
+    search_fields = ('user__username', 'user__email', 'product__title', 'product__pid')
+    raw_id_fields = ('user', 'product')
 
 @admin.register(Address)
 class AddressAdmin(admin.ModelAdmin):
@@ -38,7 +44,6 @@ class AddressAdmin(admin.ModelAdmin):
     raw_id_fields = ('user',)
     list_editable = ('active',)  # Allow quick toggle of active status
 
-
 @admin.register(Coupon)
 class CouponAdmin(admin.ModelAdmin):
     list_display = ('code', 'discount_type', 'discount_value', 'minimum_purchase', 'used_count', 'max_usage', 'active', 'valid_from', 'valid_to')
@@ -47,30 +52,28 @@ class CouponAdmin(admin.ModelAdmin):
     readonly_fields = ('used_count', 'date')
 
 
+class OrderItemInline(admin.TabularInline):
+    model = OrderItem
+    extra = 0
+    fields = ('product', 'quantity', 'price')
+
+
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
-    list_display = ('user',)  # Removed invalid fields
-    list_filter = ()  # Removed invalid fields
-    search_fields = ('user__username', 'user__email')
-    readonly_fields = ()  # Removed invalid fields
-    raw_id_fields = ('user',)  # Removed invalid fields
-
+    list_display = ('id', 'user', 'email', 'stripe_payment_intent', 'amount', 'currency', 'status', 'created_at')
+    list_filter = ('status', 'currency', 'created_at')
+    search_fields = ('id', 'user__username', 'email', 'stripe_payment_intent')
+    raw_id_fields = ('user',)
     fieldsets = (
         ('Order Information', {
             'fields': ('user',)
         }),
     )
-
+    inlines = [OrderItemInline]  # Add inline for OrderItems
 
 @admin.register(OrderItem)
 class OrderItemAdmin(admin.ModelAdmin):
-    list_display = ('order', 'product', 'quantity', 'price')  # Removed invalid fields
-    list_filter = ()  # Removed invalid fields
+    list_display = ('order', 'product', 'quantity', 'price')
+    list_filter = ()
     search_fields = ('order__user__username', 'product__title')
-    raw_id_fields = ('order',)  # Removed invalid fields
-
-
-class OrderItemInline(admin.TabularInline):
-    model = OrderItem
-    extra = 0
-    fields = ('product', 'quantity', 'price')  # Removed invalid fields
+    raw_id_fields = ('order', 'product')

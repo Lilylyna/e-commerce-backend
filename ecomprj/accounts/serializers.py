@@ -13,11 +13,11 @@ class LoginSerializer(serializers.Serializer):
             user = authenticate(username=username, password=password)
             if user:
                 if not user.is_active:
-                    raise serializers.ValidationError("Ce compte est désactivé.")
+                    raise serializers.ValidationError("This account is disabled.")
                 return user
             else:
-                raise serializers.ValidationError("Nom d’utilisateur ou mot de passe incorrect.")
+                raise serializers.ValidationError("Username or password incorrect.")
         else:
-            raise serializers.ValidationError("Les deux champs sont requis.")
+            raise serializers.ValidationError("Both fields are required.")
 
 

@@ -1,6 +1,7 @@
 from django.db import models
 from shortuuid.django_fields import ShortUUIDField
 from django.contrib.auth import get_user_model
+from django.db.models import Avg
 from .patterns import ObserverRegistry, EmailNotificationObserver, InventoryObserver, AnalyticsObserver
 
 User = get_user_model()
@@ -61,6 +62,24 @@ class Product(models.Model):
     
     def __str__(self):
         return self.title
+
+    def average_rating(self):
+        """
+        Returns the average rating across related reviews.also to Kept safe: if no `reviews` relation exists yet, returns 0.
+        """
+        reviews = getattr(self, "reviews", None)
+        if reviews is None:
+            return 0
+        return reviews.aggregate(avg=Avg("rating"))["avg"] or 0
+
+    def review_count(self):
+        """
+        Returns the number of related reviews. to if no `reviews` relation exists yet, returns 0.
+        """
+        reviews = getattr(self, "reviews", None)
+        if reviews is None:
+            return 0
+        return reviews.count()
 
     def save(self, *args, **kwargs):
         """Override save to notify observers of stock changes
@@ -127,6 +146,22 @@ class Cart(models.Model):
     def subtotal(self):
         """Calculate subtotal for this cart item"""
         return self.price * self.quantity
+
+
+class Wishlist(models.Model):
+    """Wishlist model - stores products a user wants to save"""
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="wishlist_items")
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name="wishlist_items")
+    date = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Wishlist"
+        verbose_name_plural = "Wishlist Items"
+        unique_together = ['user', 'product']  # One wishlist entry per user per product
+        ordering = ['-date']
+
+    def __str__(self):
+        return f"{self.user.username} - {self.product.title}"
 
 
 class Address(models.Model):
@@ -227,6 +262,21 @@ class Order(models.Model):
     
     oid = ShortUUIDField(unique=True, length=10, max_length=30, prefix="ord", alphabet="abcdefgh12345")
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="orders")
+
+    # payment fields (also used by admin.py)
+    email = models.EmailField(blank=True, null=True)
+    stripe_payment_intent = models.CharField(max_length=255, unique=True, blank=True, null=True)
+    amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    currency = models.CharField(max_length=10, default="usd")
+
+    STATUS_CHOICES = (
+        ("pending", "Pending"),
+        ("paid", "Paid"),
+        ("failed", "Failed"),
+    )
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="pending")
+
+    # Existing fulfillment/status field
     order_status = models.CharField(max_length=20, choices=ORDER_STATUS_CHOICES, default='pending')
     
     # Price fields
@@ -244,6 +294,7 @@ class Order(models.Model):
     coupon = models.ForeignKey(Coupon, on_delete=models.SET_NULL, null=True, blank=True, related_name="orders")
     
     # Timestamps
+    created_at = models.DateTimeField(auto_now_add=True)
     date = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
     
@@ -254,6 +305,9 @@ class Order(models.Model):
     
     def __str__(self):
         return f"Order {self.oid} - {self.user.username} - {self.total}"
+
+    def is_owner(self, user):
+        return self.user == user
     
     def save(self, *args, **kwargs):
         """Override save to calculate total and notify observers of status changes
@@ -274,6 +328,10 @@ class Order(models.Model):
 
         # Calculate total
         self.total = self.subtotal + self.shipping_fee + self.tax - self.discount_amount
+
+        # Keep `amount` in sync with `total` by default (payment/admin expects `amount`)
+        if self.amount in (None, 0):
+            self.amount = self.total
 
         # Save the order
         super().save(*args, **kwargs)
