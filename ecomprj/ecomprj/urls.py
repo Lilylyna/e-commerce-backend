@@ -28,6 +28,7 @@ urlpatterns = [
     # Main app routes
     path("", include("core.urls")),
     path("", include("userauths.urls")),
+    path('cryptopayments/', include('cryptopayments.urls')),
 
     # Accounts API routes
     path('api/accounts/', include('accounts.urls')),

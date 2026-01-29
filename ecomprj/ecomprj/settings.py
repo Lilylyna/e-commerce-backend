@@ -89,6 +89,7 @@ INSTALLED_APPS = [
     'django_filters',
     'profiles.apps.ProfilesConfig',
     'reviews',
+    'cryptopayments',
 ]
 
 MIDDLEWARE = [
@@ -169,6 +170,10 @@ USE_TZ = True
 STATIC_URL = 'static/'
 
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticf')
+
+CRYPTO_API_KEY = "test_key"
+CRYPTO_BACKEND = "cryptopayments.mock_backend"
+
 
 # STATICFILES_DIRS = [os.path.join(BASE_DIR, 'staticfiles')]  # Commented out - not using static files
 
