@@ -449,10 +449,10 @@ class CheckoutView(APIView):
 
                     product = get_object_or_404(Product, id=product_id)
 
-                    if product.stock < quantity:
+                    if product.stock_count < quantity:
                         raise ValueError(f"Insufficient stock for product {product.name}.")
 
-                    product.stock -= quantity
+                    product.stock_count -= quantity
                     product.save()
 
                     order_item = OrderItem.objects.create(
