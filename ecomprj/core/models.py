@@ -70,7 +70,7 @@ class Product(models.Model):
         reviews = getattr(self, "reviews", None)
         if reviews is None:
             return 0
-        return reviews.aggregate(avg=Avg("rating"))["avg"] or 0
+        return round(float(reviews.aggregate(avg=Avg("rating"))["avg"] or 0), 1)
 
     def review_count(self):
         """

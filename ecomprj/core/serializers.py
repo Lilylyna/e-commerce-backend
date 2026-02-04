@@ -202,6 +202,8 @@ class CartSerializer(serializers.ModelSerializer):
         fields = ['id', 'product', 'product_title', 'product_price', 'quantity', 'price', 'subtotal']
 
 class ProductSerializer(serializers.ModelSerializer):
+    average_rating = serializers.SerializerMethodField()
+    review_count = serializers.SerializerMethodField()
     """Serializer for Product model"""
     category = CategorySerializer(read_only=True)
     category_id = serializers.PrimaryKeyRelatedField(
@@ -225,7 +227,8 @@ class ProductSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'pid', 'vendor', 'vendor_id', 'vendor_title', 'category', 'category_id',
             'title', 'price', 'old_price', 'image', 'status', 'stock_count', 'date',
-            'is_discounted', 'discount_percentage'
+            'is_discounted', 'discount_percentage', 'average_rating',
+            'review_count',
         ]
         read_only_fields = ['pid', 'date']
     
@@ -237,6 +240,12 @@ class ProductSerializer(serializers.ModelSerializer):
             if request:
                 representation['image'] = request.build_absolute_uri(instance.image.url)
         return representation
+    
+    def get_average_rating(self, obj):
+        return obj.average_rating() or 0
+
+    def get_review_count(self, obj):
+        return obj.review_count() or 0
 
 
 class WishlistSerializer(serializers.ModelSerializer):

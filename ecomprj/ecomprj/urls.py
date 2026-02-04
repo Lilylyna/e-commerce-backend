@@ -33,6 +33,7 @@ urlpatterns = [
     path('api/accounts/', include('accounts.urls')),
     path('api/profile/', include('profiles.urls')),
     path('api/reviews/', include('reviews.urls')),
+    path('api/vendor/', include('vendors.urls')),
 
     # Django auth (password reset, etc.)
     path('auth/', include('django.contrib.auth.urls')),
