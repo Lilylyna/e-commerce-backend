@@ -49,3 +49,12 @@ class ChangePasswordView(APIView):
 
         return Response({"detail": "Password successfully changed"})
 
+class DeleteAccountView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request):
+        request.user.delete()
+        return Response(
+            {"message": "Account deleted successfully"},
+            status=status.HTTP_200_OK
+        )
