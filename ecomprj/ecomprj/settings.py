@@ -47,14 +47,21 @@ LOGGING = {
     },
 }
 
-
-EMAIL_BACKEND = "sendgrid_backend.SendgridBackend"
-SENDGRID_API_KEY = config("SENDGRID_API_KEY")
-DEFAULT_FROM_EMAIL = config("EMAIL_FROM")
-EMAIL_USE_TLS = True
-EMAIL_PORT = 587
-EMAIL_HOST = "smtp.sendgrid.net"
-SENDGRID_SANDBOX_MODE_IN_DEBUG = False
+DEBUG = True  
+ALLOWED_HOSTS = ['testserver', '127.0.0.1', 'localhost']
+if DEBUG:
+    # Print emails to console
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+    DEFAULT_FROM_EMAIL = 'no-reply@ecommerce.local'
+else:
+    #  Use SendGrid or real email service
+    EMAIL_BACKEND = "sendgrid_backend.SendgridBackend"
+    SENDGRID_API_KEY = config("SENDGRID_API_KEY", default="")
+    DEFAULT_FROM_EMAIL = config("EMAIL_FROM", default="no-reply@ecommerce.local")
+    EMAIL_USE_TLS = True
+    EMAIL_PORT = 587
+    EMAIL_HOST = "smtp.sendgrid.net"
+    SENDGRID_SANDBOX_MODE_IN_DEBUG = False
 
 
 # Quick-start development settings - unsuitable for production
@@ -89,7 +96,8 @@ INSTALLED_APPS = [
     'django_filters',
     'profiles.apps.ProfilesConfig',
     'reviews',
-    'cryptopayments',
+    'rest_framework_simplejwt.token_blacklist',
+
 ]
 
 MIDDLEWARE = [
@@ -171,10 +179,6 @@ STATIC_URL = 'static/'
 
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticf')
 
-CRYPTO_API_KEY = "test_key"
-CRYPTO_BACKEND = "cryptopayments.mock_backend"
-
-
 # STATICFILES_DIRS = [os.path.join(BASE_DIR, 'staticfiles')]  # Commented out - not using static files
 
 MEDIA_URL = '/media/'
@@ -192,7 +196,7 @@ REST_FRAMEWORK = {
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
     'DEFAULT_PERMISSION_CLASSES': (
-        'rest_framework.permissions.IsAuthenticated',
+        'rest_framework.permissions.AllowAny',
     ),
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
 }
