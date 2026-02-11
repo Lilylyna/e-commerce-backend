@@ -23,34 +23,39 @@ from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 
 urlpatterns = [
     # Admin route
-    path('admin/', admin.site.urls),
+    path("admin/", admin.site.urls),
 
     # Main app routes
     path("", include("core.urls")),
     path("", include("userauths.urls")),
 
     # Accounts API routes
-    path('api/accounts/', include('accounts.urls')),
-    path('api/profile/', include('profiles.urls')),
-    path('api/reviews/', include('reviews.urls')),
-    path('api/vendor/', include('vendors.urls')),
+    path("api/accounts/", include("accounts.urls")),
+    path("api/profile/", include("profiles.urls")),
+    path("api/reviews/", include("reviews.urls")),
+    path("api/vendor/", include("vendors.urls")),
+
+    # Crypto testnet / BTCPay-style simulator
+    path("api/crypto/", include("cryptopayments.urls")),
 
     # Django auth (password reset, etc.)
-    path('auth/', include('django.contrib.auth.urls')),
+    path("auth/", include("django.contrib.auth.urls")),
 
     # JWT token routes
-    path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
-    path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
-    path('api/token/verify/', TokenVerifyView.as_view(), name='token_verify'),
+    path("api/token/", TokenObtainPairView.as_view(), name="token_obtain_pair"),
+    path("api/token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
+    path("api/token/verify/", TokenVerifyView.as_view(), name="token_verify"),
+    path("api/token/blacklist/", TokenBlacklistView.as_view(), name="token_blacklist"),
     path('api/token/blacklist/', TokenBlacklistView.as_view(), name='token_blacklist'),  
-    
 
     # API schema & docs (drf-spectacular)
-    path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
-    path('api/schema/docs/', SpectacularSwaggerView.as_view(url_name='schema'), name='schema-docs'),
+    path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
+    path(
+        "api/schema/docs/",
+        SpectacularSwaggerView.as_view(url_name="schema"),
+        name="schema-docs",
+    ),
 ]
 
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
-
-
