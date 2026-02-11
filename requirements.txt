@@ -15,6 +15,10 @@ python-decouple==3.8
 sendgrid==6.11.0
 django-sendgrid-v5==1.2.4
 
+# BTCPay & Crypto testnet simulator
+btcpay-python==1.2.1
+bip32==5.0.0
+
 # Filtering
 django-filter==23.2
 

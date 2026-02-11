@@ -1,10 +1,5 @@
 """
-Observer Pattern Implementation for E-Commerce Backend
-
-The Observer pattern defines a one-to-many dependency between objects so that when one object
-(state) changes, all its dependents (observers) are notified and updated automatically.
-
-This implementation is used for:
+Observer Pattern Implementation
 - Order status changes (email notifications, inventory updates, analytics)
 - Product stock level changes
 - User registration events
@@ -232,12 +227,11 @@ class AnalyticsObserver(OrderStatusObserver, Observer):
             # Track conversion metrics
             if new_status == 'delivered':
                 logger.info(f"Order {order.oid} completed - tracking conversion analytics")
-                # Could integrate with analytics service here
-                # e.g., Google Analytics, Mixpanel, custom analytics, etc.
+                # Could integrate with analytics service e.g., Google Analytics, Mixpanel or tbh custom.
 
             elif new_status == 'cancelled':
                 logger.info(f"Order {order.oid} cancelled - tracking cancellation analytics")
-                # Track cancellation reasons, patterns, etc.
+                # Track cancellation reasons, patterns, etc....
 
             # Track order lifecycle metrics
             logger.info(f"Order {order.oid} status changed: {old_status} -> {new_status}")
@@ -249,9 +243,7 @@ class AnalyticsObserver(OrderStatusObserver, Observer):
 # Product-specific observers
 class ProductStockObserver(Observer):
     """
-    Observer that monitors product stock changes.
-
-    OBSERVER PATTERN IMPLEMENTATION:
+    Observer that monitors product stock changes
     - This class implements the Observer interface
     - It gets notified when product stock changes
     - It performs stock-related actions as a side effect of the change
@@ -293,9 +285,7 @@ class ProductStockObserver(Observer):
 # Global observer registry
 class ObserverRegistry:
     """
-    Registry to manage observers globally.
-
-    This class provides a centralized way to register and manage observers
+    Registry a way to register and manage observers
     across the application.
     """
 

@@ -1,3 +1,16 @@
+"""
+Legacy / conceptual mainnet payment processor.
+
+NOTE:
+    This module is kept as a standalone demo for illustrating ideas like
+    node connectivity and asset conversion. It is NOT wired into the
+    `cryptopayments` API and is not used by the testnet BTCPay-style
+    simulator.
+
+    For dev/testing flows, use the Testnet* modules and the
+    /api/crypto/testnet/* endpoints instead.
+"""
+
 import uuid
 import time
 import random

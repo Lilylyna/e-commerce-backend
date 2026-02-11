@@ -2,8 +2,13 @@ import time
 import uuid
 import hashlib
 
+# Default transaction size used for fee estimation in the simulator.
+# In a real implementation this would be calculated from the actual tx.
+DEFAULT_TRANSACTION_SIZE_BYTES = 250
+
+
 class Block:
-    def __init__(self, index, timestamp, transactions, previous_hash,  nonce=0):
+    def __init__(self, index, timestamp, transactions, previous_hash, nonce=0):
         self.index = index
         self.timestamp = timestamp
         self.transactions = transactions
@@ -56,11 +61,24 @@ class TestnetBlockchain:
         if transaction.amount <= 0:
             print("Transaction amount must be positive.")
             return False
-        # Sender must have enough balance PLUS the fee
-        fee = self.calculate_fee(transaction.amount) # Placeholder for transaction_size
-        if transaction.sender != "network" and self.balances.get(transaction.sender, 0) < (transaction.amount + fee):
-            print(f"Insufficient funds for {transaction.sender}. Balance: {self.balances.get(transaction.sender, 0)}, Needed: {transaction.amount + fee}")
-            return False
+        # Sender must have enough balance PLUS the fee.
+        # For the simulator, we trust the fee set by the wallet if provided;
+        # otherwise we estimate using a default byte size.
+        if transaction.fee <= 0:
+            transaction.fee = self.calculate_fee(DEFAULT_TRANSACTION_SIZE_BYTES)
+
+        if transaction.sender != "network":
+            transaction.amount_with_fee = transaction.amount + transaction.fee
+            sender_balance = self.balances.get(transaction.sender, 0)
+            if sender_balance < transaction.amount_with_fee:
+                print(
+                    f"Insufficient funds for {transaction.sender}. "
+                    f"Balance: {sender_balance}, Needed: {transaction.amount_with_fee}"
+                )
+                return False
+        else:
+            # "network" is a special faucet/miner source; it doesn't spend a balance.
+            transaction.amount_with_fee = transaction.amount
 
         self.pending_transactions.append(transaction)
         self.mempool.append(transaction) # Add to mempool as unconfirmed
@@ -72,16 +90,9 @@ class TestnetBlockchain:
             print("No pending transactions to mine.")
             return None
 
-        # Include fees in transactions before mining
-        transactions_to_mine = []
-        for tx in self.pending_transactions:
-            fee = self.calculate_fee(tx.amount) # Calculate fee for each transaction
-            if tx.sender != "network":
-                tx.amount_with_fee = tx.amount + fee
-                # Deduct fee from sender, add to a miner (network) or burn (for simplicity, we'll let it be deducted)
-            else:
-                tx.amount_with_fee = tx.amount
-            transactions_to_mine.append(tx)
+        # In this simulator, transactions already carry their fee and amount_with_fee
+        # from when they were added, so we simply include them as-is.
+        transactions_to_mine = list(self.pending_transactions)
 
         last_block_hash = self.last_block.hash
         new_block_index = len(self.chain)

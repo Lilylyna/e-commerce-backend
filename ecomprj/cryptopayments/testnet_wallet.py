@@ -1,17 +1,59 @@
 import uuid
 from .testnet_blockchain import Transaction, TestnetBlockchain
 
+try:
+    # Optional HD wallet support using python-bip32 if installed.
+    # This keeps the simulator lightweight but lets you plug in a real xpub.
+    from bip32 import BIP32  # type: ignore
+except ImportError:  # pragma: no cover - optional dependency
+    BIP32 = None
+
+
 class TestnetWallet:
     def __init__(self, blockchain: TestnetBlockchain, xpub: str = "xpub_simulated_master_key"):
         self.blockchain = blockchain
-        self.xpub = xpub # Simulated extended public key
+        self.xpub = xpub  # Simulated extended public key (or real xpub if provided)
         self.address_counter = 0
-        self.addresses = set() # Stores addresses managed by this wallet
+        self.addresses = set()  # Stores addresses managed by this wallet
+
+        # If a real xpub is provided and bip32 is available, prepare an HD wallet context.
+        self._bip32 = None
+        if BIP32 is not None and xpub and xpub != "xpub_simulated_master_key":
+            try:
+                self._bip32 = BIP32.from_xpub(xpub)
+                print("HD wallet enabled for TestnetWallet using provided xpub.")
+            except Exception as exc:  # pragma: no cover - defensive path
+                # Fall back to simple deterministic scheme if xpub is invalid.
+                print(f"Failed to initialize BIP32 from xpub, falling back to simulated addresses: {exc}")
+                self._bip32 = None
+
+    def _derive_hd_address(self) -> str:
+        """
+        Derive a pseudo-address from the xpub using BIP32 if available.
+
+        For simulation purposes we treat the compressed public key (hex) as the address.
+        This keeps things deterministic without needing full Bech32/Base58 encoding.
+        """
+        assert self._bip32 is not None
+        # Use a simple path scheme m/0/{index} to simulate BTCPay-style derivation.
+        path = f"m/0/{self.address_counter}"
+        pubkey = self._bip32.get_pubkey_from_path(path)
+        # Represent the pubkey bytes as a hex "address" for the simulator.
+        return pubkey.hex()
 
     def generate_address(self) -> str:
-        # In a real HD wallet, this would derive a new address from the xpub.
-        # Here, we simulate deterministic generation using a counter and the xpub.
-        derived_address = f"{self.xpub}_{self.address_counter}"
+        """
+        Generate the next receive address for this wallet.
+
+        - If BIP32 is available and a real xpub was supplied, derive from the xpub.
+        - Otherwise, use a deterministic xpub+counter string as before.
+        """
+        if self._bip32 is not None:
+            derived_address = self._derive_hd_address()
+        else:
+            # Simulated deterministic generation using a counter and the xpub.
+            derived_address = f"{self.xpub}_{self.address_counter}"
+
         self.address_counter += 1
         self.addresses.add(derived_address)
         print(f"Generated new testnet address (derived from xpub): {derived_address}")

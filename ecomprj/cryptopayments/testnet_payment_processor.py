@@ -1,20 +1,33 @@
 import time
 import uuid
-from typing import Dict
+from typing import Dict, Optional
+
+from django.conf import settings
+
 from .testnet_blockchain import TestnetBlockchain, Transaction
 from .testnet_wallet import TestnetWallet
-from .testnet_webhook_queue import WebhookQueue # Import the WebhookQueue
+from .testnet_webhook_queue import WebhookQueue  # Import the WebhookQueue
+
 
 class TestnetInvoice:
-    def __init__(self, invoice_id, amount, currency, payment_address):
+    def __init__(
+        self,
+        invoice_id,
+        amount,
+        currency,
+        payment_address,
+        webhook_url: Optional[str] = None,
+    ):
         self.invoice_id = invoice_id
         self.amount = amount
         self.currency = currency
         self.payment_address = payment_address
-        self.status = "pending"  # pending, paid, expired
+        self.status = "pending"  # pending, partial, paid, overpaid, expired
         self.paid_amount = 0.0
+        self.overpaid_amount = 0.0
         self.created_at = time.time()
         self.expires_at = self.created_at + 3600  # Invoice expires in 1 hour
+        self.webhook_url = webhook_url
 
     def to_dict(self):
         return {
@@ -24,25 +37,46 @@ class TestnetInvoice:
             "payment_address": self.payment_address,
             "status": self.status,
             "paid_amount": self.paid_amount,
+            "overpaid_amount": self.overpaid_amount,
             "created_at": self.created_at,
-            "expires_at": self.expires_at
+            "expires_at": self.expires_at,
+            "webhook_url": self.webhook_url,
         }
+
 
 class TestnetPaymentProcessor:
     def __init__(self, blockchain: TestnetBlockchain, wallet: TestnetWallet):
         self.blockchain = blockchain
         self.wallet = wallet
         self.invoices: Dict[str, TestnetInvoice] = {}
-        self.webhook_queue = WebhookQueue() # Instantiate the WebhookQueue
+        self.webhook_queue = WebhookQueue()  # Instantiate the WebhookQueue
 
-    def create_invoice(self, amount: float, currency: str) -> dict:
+    def create_invoice(
+        self,
+        amount: float,
+        currency: str,
+        webhook_url: Optional[str] = None,
+    ) -> dict:
         """
         Creates a new testnet invoice. It generates a new address from the testnet wallet
         to be used as the payment destination.
+
+        If a webhook URL is provided (or configured via settings), it will be used by the
+        webhook queue once the invoice is marked paid, simulating BTCPay's webhook callbacks.
         """
         payment_address = self.wallet.generate_address()
         invoice_id = str(uuid.uuid4())
-        invoice = TestnetInvoice(invoice_id, amount, currency, payment_address)
+
+        if webhook_url is None:
+            webhook_url = getattr(settings, "TESTNET_WEBHOOK_URL", None)
+
+        invoice = TestnetInvoice(
+            invoice_id,
+            amount,
+            currency,
+            payment_address,
+            webhook_url=webhook_url,
+        )
         self.invoices[invoice_id] = invoice
         print(f"Testnet Invoice created: {invoice.to_dict()}")
         return invoice.to_dict()
@@ -56,7 +90,7 @@ class TestnetPaymentProcessor:
         if not invoice:
             return {"error": "Invoice not found"}
 
-        if invoice.status == "paid" or invoice.status == "expired":
+        if invoice.status in ("paid", "overpaid", "expired"):
             return invoice.to_dict()
 
         # Check for expired invoices during monitoring
@@ -67,19 +101,40 @@ class TestnetPaymentProcessor:
 
         # Get transactions for the payment address
         address_transactions = self.blockchain.get_transactions_for_address(invoice.payment_address)
-        current_paid_amount = 0.0
+        total_received = 0.0
         for tx in address_transactions:
             if tx["recipient"] == invoice.payment_address:
-                current_paid_amount += tx["amount"]
+                total_received += tx["amount"]
 
-        if current_paid_amount > invoice.paid_amount:
-            invoice.paid_amount = current_paid_amount
+        # Update amounts
+        if total_received != invoice.paid_amount:
+            invoice.paid_amount = total_received
             print(f"Update: Invoice {invoice_id} now has {invoice.paid_amount} paid.")
 
-        if invoice.paid_amount >= invoice.amount:
-            invoice.status = "paid"
+        # Determine status based on how much has been received
+        if total_received <= 0:
+            # No payments yet; keep existing status (likely 'pending')
+            pass
+        elif total_received < invoice.amount:
+            invoice.status = "partial"
+            invoice.overpaid_amount = 0.0
+        else:
+            # Paid in full or overpaid
+            if total_received > invoice.amount:
+                invoice.status = "overpaid"
+                invoice.overpaid_amount = total_received - invoice.amount
+            else:
+                invoice.status = "paid"
+                invoice.overpaid_amount = 0.0
+
             print(f"Testnet Webhook triggered for invoice {invoice_id}: Payment received!")
-            self.webhook_queue.add_webhook("http://your-ecommerce-backend.com/webhook", invoice.to_dict()) # Dispatch webhook
+
+            # Dispatch webhook if a URL is configured for this invoice or globally.
+            webhook_url = invoice.webhook_url or getattr(
+                settings, "TESTNET_WEBHOOK_URL", None
+            )
+            if webhook_url:
+                self.webhook_queue.add_webhook(webhook_url, invoice.to_dict())
 
         return invoice.to_dict()
 
@@ -139,7 +194,7 @@ class TestnetPaymentProcessor:
         """
         current_time = time.time()
         for invoice_id, invoice in self.invoices.items():
-            if invoice.status == "pending" and current_time > invoice.expires_at:
+            if invoice.status in ("pending", "partial") and current_time > invoice.expires_at:
                 invoice.status = "expired"
                 print(f"Testnet Invoice {invoice_id} has expired.")
 
