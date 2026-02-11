@@ -46,13 +46,7 @@ except ImportError:
         200: {"description": "Webhook processed successfully"},
         400: {"description": "Bad request or invalid signature"},
         500: {"description": "Internal server error"}
-    }
-    request=None,
-    responses={
-        200: {"description": "Webhook processed successfully"},
-        400: {"description": "Bad request or invalid signature"},
-        500: {"description": "Internal server error"}
-    }
+    },
 )
 def stripe_webhook(request):
     """

@@ -51,15 +51,6 @@ except ImportError:
         name='CreatePaymentIntentRequest',
         fields={
             'email': serializers.EmailField(required=True),
-            'amount': serializers.DecimalField(max_digits=10, decimal_places=2, required=True),
-            'currency': serializers.CharField(default='usd', required=False),
-        }
-    ),
-    description="Create a Stripe Payment Intent for checkout",
-    request=inline_serializer(
-        name='CreatePaymentIntentRequest',
-        fields={
-            'email': serializers.EmailField(required=True),
             'amount': serializers.DecimalField(
                 max_digits=10, 
                 decimal_places=2, 
